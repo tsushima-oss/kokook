@@ -337,7 +337,7 @@ input:focus,select:focus{border-color:#ff6ec7;background:#fff}
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
           <button class="btn btn-ghost" onclick="clearInput()">クリア</button>
-          <button class="btn btn-success" onclick="submitResponse()">送信する</button>
+          <button class="btn btn-success" onclick="submitResponse()">保存</button>
         </div>
         <div id="submit-msg" class="msg" style="display:none"></div>
       </div>
@@ -504,8 +504,9 @@ const ADMIN_KEY = 'admin123';
 // ── State ────────────────────────────────────────────────────────────
 let gistId = '';
 let gistOwner = '';
-let rawBase = '';      // Raw URL（認証不要・読み込み専用）
-let githubToken = '';  // 書き込み用（管理者のみ）
+let rawBase = '';          // Raw URL（認証不要・読み込み専用）
+let githubToken = '';      // 書き込み用（管理者のみ・localStorage）
+let memberWriteToken = ''; // 書き込み用（Gistデータ内に保存・全員共有）
 let pollTimer = null;
 let appData = { members: [], responses: {}, slots: [] };
 let currentUser = null;
@@ -574,13 +575,14 @@ async function gistRead() {
   return await res.json();
 }
 
-// 書き込み：GitHub API使用（トークン必要・管理者のみ）
+// 書き込み：GitHub API使用（管理者トークン or メンバー共有トークンを使用）
 async function gistWrite(data) {
-  if (!githubToken) throw new Error('管理者トークンが必要です');
+  const token = githubToken || memberWriteToken;
+  if (!token) throw new Error('トークン未設定です。管理者にお問い合わせください。');
   const res = await fetch(`https://api.github.com/gists/${gistId}`, {
     method: 'PATCH',
     headers: {
-      'Authorization': `token ${githubToken}`,
+      'Authorization': `token ${token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/vnd.github.v3+json'
     },
@@ -604,7 +606,13 @@ async function saveGistConfig() {
     rawBase = `https://gist.githubusercontent.com/${gistOwner}/${gistId}/raw`;
 
     if (!gist.files[GIST_FILE]) {
-      await gistWrite({ members: [], slots: [], responses: {} });
+      await gistWrite({ members: [], slots: [], responses: {}, _wt: githubToken });
+    } else {
+      // 既存Gistにもトークンを書き込む（メンバーが送信できるように）
+      const existing = await gistRead();
+      if (!existing._wt) {
+        await gistWrite({ ...existing, _wt: githubToken });
+      }
     }
     localStorage.setItem('kokook_gist_config', JSON.stringify({ gistId, gistOwner, githubToken }));
 
@@ -639,7 +647,10 @@ async function refreshData() {
       members: Array.isArray(d.members) ? d.members : [],
       responses: d.responses || {},
       slots: Array.isArray(d.slots) ? d.slots : [],
+      _wt: d._wt || '',
     };
+    // Gistデータ内のトークンをメンバー書き込み用として取得
+    if (d._wt) memberWriteToken = d._wt;
     updateHeaderSub();
     renderInputTab();
     if (activeTab === 'results') renderResults();
@@ -828,7 +839,7 @@ function updateTokenStatus() {
   }
 }
 
-function applyToken() {
+async function applyToken() {
   const t = document.getElementById('token-input-field').value.trim();
   if (!t) return showMsg('token-msg','トークンを入力してください','err');
   githubToken = t;
@@ -837,7 +848,18 @@ function applyToken() {
   localStorage.setItem('kokook_gist_config', JSON.stringify({...c, githubToken: t}));
   document.getElementById('token-input-field').value = '';
   updateTokenStatus();
-  showMsg('token-msg','トークンを設定しました。もう一度保存してみてください。','ok');
+  // Gistデータにもトークンを保存（メンバーが送信できるように）
+  if (gistId) {
+    try {
+      const latest = await gistRead();
+      await gistWrite({ ...latest, _wt: t });
+      showMsg('token-msg','トークンを設定しました！メンバーも送信できるようになりました。','ok');
+    } catch(e) {
+      showMsg('token-msg','トークン設定済み（Gist保存失敗: '+e.message+'）','err');
+    }
+  } else {
+    showMsg('token-msg','トークンを設定しました。','ok');
+  }
 }
 
 function syncAdminCalendar() {
