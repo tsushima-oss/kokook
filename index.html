@@ -391,6 +391,25 @@ input:focus,select:focus{border-color:#ff6ec7;background:#fff}
       <div id="firebase-msg" class="msg" style="display:none"></div>
     </div>
 
+    <!-- 共有URL表示カード -->
+    <div class="card" id="share-urls-card" style="display:none">
+      <div class="card-title">共有URL</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:.78rem;font-weight:800;color:#c084b0;margin-bottom:5px">メンバーに送るURL</div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="member-url-text" readonly style="font-size:.75rem;background:#fff9fd;color:#2d1b4e">
+          <button class="btn btn-ghost" style="flex-shrink:0;font-size:.78rem;padding:8px 12px" onclick="copyUrl('member-url-text')">コピー</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.78rem;font-weight:800;color:#c084b0;margin-bottom:5px">管理者用URL（自分用に保存）</div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="admin-url-text" readonly style="font-size:.75rem;background:#fff9fd;color:#2d1b4e">
+          <button class="btn btn-ghost" style="flex-shrink:0;font-size:.78rem;padding:8px 12px" onclick="copyUrl('admin-url-text')">コピー</button>
+        </div>
+      </div>
+    </div>
+
     <div class="card" id="admin-auth-card">
       <div class="card-title">管理者ログイン</div>
       <div class="row">
@@ -482,7 +501,9 @@ const ADMIN_KEY = 'admin123';
 
 // ── State ────────────────────────────────────────────────────────────
 let gistId = '';
-let githubToken = '';
+let gistOwner = '';
+let rawBase = '';      // Raw URL（認証不要・読み込み専用）
+let githubToken = '';  // 書き込み用（管理者のみ）
 let pollTimer = null;
 let appData = { members: [], responses: {}, slots: [] };
 let currentUser = null;
@@ -505,33 +526,47 @@ const GIST_FILE = 'kokook-data.json';
   buildTimePresets(); buildCalendar();
   renderInputTab();
 
-  // ?admin がURLにあれば管理者タブを表示
-  const isAdmin = new URLSearchParams(location.search).has('admin');
+  const params = new URLSearchParams(location.search);
+  const gistParam = params.get('gist'); // "owner/gistId" 形式
+  const isAdmin = params.has('admin');
   if (isAdmin) document.getElementById('admin-tab-btn').style.display = '';
 
+  // URLからGist情報取得（メンバー・管理者共通）
+  if (gistParam && gistParam.includes('/')) {
+    const [owner, id] = gistParam.split('/');
+    gistOwner = owner; gistId = id;
+    rawBase = `https://gist.githubusercontent.com/${owner}/${id}/raw`;
+    document.getElementById('firebase-setup-card').style.display = 'none';
+  }
+
+  // localStorageから管理者トークンを復元
   const saved = localStorage.getItem('kokook_gist_config');
   if (saved) {
     try {
       const c = JSON.parse(saved);
-      gistId = c.gistId; githubToken = c.githubToken;
-      document.getElementById('firebase-setup-card').style.display = 'none';
-      startPolling();
+      githubToken = c.githubToken || '';
+      if (!gistId && c.gistId && c.gistOwner) {
+        gistId = c.gistId; gistOwner = c.gistOwner;
+        rawBase = `https://gist.githubusercontent.com/${gistOwner}/${gistId}/raw`;
+        document.getElementById('firebase-setup-card').style.display = 'none';
+      }
     } catch(e) {}
   }
+
+  if (rawBase) startPolling();
 })();
 
 // ── GitHub Gist API ───────────────────────────────────────────────────
+// 読み込み：Raw URL使用（トークン不要・レート制限なし）
 async function gistRead() {
-  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-    headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
-  });
+  const res = await fetch(`${rawBase}/${GIST_FILE}?t=${Date.now()}`);
   if (!res.ok) throw new Error(`読み込みエラー (${res.status})`);
-  const gist = await res.json();
-  const content = gist.files[GIST_FILE]?.content || '{}';
-  return JSON.parse(content);
+  return await res.json();
 }
 
+// 書き込み：GitHub API使用（トークン必要・管理者のみ）
 async function gistWrite(data) {
+  if (!githubToken) throw new Error('管理者トークンが必要です');
   const res = await fetch(`https://api.github.com/gists/${gistId}`, {
     method: 'PATCH',
     headers: {
@@ -550,18 +585,30 @@ async function saveGistConfig() {
   if (!token || !id) return showMsg('firebase-msg','トークンとGist IDを入力してください','err');
   githubToken = token; gistId = id;
   try {
-    // Gistにファイルがなければ初期データを書き込む
     const res = await fetch(`https://api.github.com/gists/${gistId}`, {
       headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
     });
     if (!res.ok) throw new Error(`Gistにアクセスできません (${res.status})`);
     const gist = await res.json();
+    gistOwner = gist.owner.login;
+    rawBase = `https://gist.githubusercontent.com/${gistOwner}/${gistId}/raw`;
+
     if (!gist.files[GIST_FILE]) {
       await gistWrite({ members: [], slots: [], responses: {} });
     }
-    localStorage.setItem('kokook_gist_config', JSON.stringify({ gistId, githubToken }));
+    localStorage.setItem('kokook_gist_config', JSON.stringify({ gistId, gistOwner, githubToken }));
+
+    // 共有URLを生成してURLを更新
+    const base = location.origin + location.pathname;
+    const gistParam = `${gistOwner}/${gistId}`;
+    const memberUrl = `${base}?gist=${gistParam}`;
+    const adminUrl  = `${base}?gist=${gistParam}&admin`;
+    history.replaceState({}, '', adminUrl);
+
     document.getElementById('firebase-setup-card').style.display = 'none';
-    showMsg('firebase-msg','接続しました！','ok');
+    document.getElementById('share-urls-card').style.display = '';
+    document.getElementById('member-url-text').value = memberUrl;
+    document.getElementById('admin-url-text').value  = adminUrl;
     startPolling();
   } catch(e) {
     showMsg('firebase-msg','エラー: '+e.message,'err');
@@ -571,11 +618,11 @@ async function saveGistConfig() {
 function startPolling() {
   refreshData();
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(refreshData, 10000); // 10秒ごとに同期
+  pollTimer = setInterval(refreshData, 15000);
 }
 
 async function refreshData() {
-  if (!gistId || !githubToken) return;
+  if (!rawBase) return;
   try {
     const d = await gistRead();
     appData = {
@@ -893,6 +940,14 @@ async function removeMember(name){
     await gistWrite({...appData, members:newMembers, responses:newResponses});
     await refreshData();
   } catch(e){ alert('エラー: '+e.message); }
+}
+
+function copyUrl(inputId) {
+  const el = document.getElementById(inputId);
+  el.select(); document.execCommand('copy');
+  const btn = el.nextElementSibling;
+  btn.textContent = 'コピー済！'; btn.style.background = '#dcfce7'; btn.style.color = '#166534';
+  setTimeout(() => { btn.textContent = 'コピー'; btn.style.background = ''; btn.style.color = ''; }, 2000);
 }
 
 function toDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
