@@ -575,9 +575,25 @@ async function gistRead() {
   return await res.json();
 }
 
-// 書き込み：GitHub API使用（管理者トークン or メンバー共有トークンを使用）
+// 書き込み：管理者専用（githubToken優先）
 async function gistWrite(data) {
   const token = githubToken || memberWriteToken;
+  if (!token) throw new Error('トークン未設定です。管理者にお問い合わせください。');
+  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `token ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    },
+    body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(data, null, 2) } } })
+  });
+  if (!res.ok) throw new Error(`保存エラー (${res.status})`);
+}
+
+// メンバー回答保存専用（memberWriteToken優先 → githubTokenにフォールバック）
+async function gistWriteMember(data) {
+  const token = memberWriteToken || githubToken;
   if (!token) throw new Error('トークン未設定です。管理者にお問い合わせください。');
   const res = await fetch(`https://api.github.com/gists/${gistId}`, {
     method: 'PATCH',
@@ -769,7 +785,7 @@ async function submitResponse() {
     const latest = await gistRead();
     latest.responses = latest.responses || {};
     latest.responses[currentUser] = currentResponses;
-    await gistWrite(latest);
+    await gistWriteMember(latest);
     appData.responses[currentUser] = currentResponses;
     showMsg('submit-msg','送信しました！','ok');
     renderInputTab();
