@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOKOOK</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'M PLUS Rounded 1c','Hiragino Maru Gothic ProN','Rounded Mplus 1c',sans-serif;
+  background:#fff5f9;
+  color:#2d1b4e;
+  min-height:100vh;
+}
+
+/* ── Header ── */
+header{
+  background:linear-gradient(120deg,#ff6ec7 0%,#ff9a3c 50%,#ffe156 100%);
+  padding:22px 20px 18px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 6px 24px rgba(255,110,199,.3);
+}
+header::before{
+  content:'';position:absolute;top:-40px;left:-40px;width:180px;height:180px;
+  border-radius:50%;background:rgba(255,255,255,.12);pointer-events:none;
+}
+header::after{
+  content:'';position:absolute;bottom:-60px;right:-30px;width:220px;height:220px;
+  border-radius:50%;background:rgba(255,255,255,.1);pointer-events:none;
+}
+.header-logo{display:flex;align-items:center;justify-content:center;gap:12px}
+.logo-icon{
+  width:46px;height:46px;background:#fff;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;box-shadow:0 4px 0 rgba(0,0,0,.12);
+  flex-shrink:0;
+}
+.logo-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+header h1{
+  font-size:2.6rem;font-weight:900;color:#fff;
+  text-shadow:3px 4px 0 rgba(0,0,0,.1);
+  letter-spacing:.12em;line-height:1;
+}
+.logo-sub{
+  font-size:.72rem;font-weight:800;color:rgba(255,255,255,.85);
+  letter-spacing:.2em;margin-top:2px;
+}
+.header-date{
+  display:inline-block;margin-top:10px;
+  background:rgba(255,255,255,.28);
+  padding:4px 18px;border-radius:20px;
+  font-size:.8rem;font-weight:800;color:#fff;
+  letter-spacing:.06em;backdrop-filter:blur(4px);
+  min-height:22px;
+}
+
+/* ── Quick preset strip ── */
+.quick-strip{
+  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;
+}
+.quick-btn{
+  padding:8px 16px;border-radius:20px;border:2.5px solid #ffd6ee;
+  background:#fff;cursor:pointer;font-size:.82rem;font-weight:800;
+  color:#d946a8;transition:all .15s;font-family:'M PLUS Rounded 1c',sans-serif;
+  box-shadow:0 3px 0 #ffc9e5;
+}
+.quick-btn:hover{background:#ffe8f5;transform:translateY(-2px);box-shadow:0 5px 0 #ffc9e5}
+.quick-btn:active{transform:translateY(0);box-shadow:0 2px 0 #ffc9e5}
+
+.container{max-width:920px;margin:0 auto;padding:20px 16px}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab-btn{
+  flex:1;padding:11px 6px;border:3px solid #ffe0f0;border-radius:14px;
+  background:#fff;cursor:pointer;font-size:.88rem;font-weight:800;
+  color:#c084b0;transition:all .18s;font-family:'Nunito',sans-serif;
+  box-shadow:0 3px 0 #ffc9e5;
+}
+.tab-btn:hover{transform:translateY(-2px);box-shadow:0 5px 0 #ffc9e5}
+.tab-btn.active{
+  background:linear-gradient(135deg,#ff6ec7,#d946a8);
+  color:#fff;border-color:#d946a8;
+  box-shadow:0 4px 0 #a21479;
+  transform:translateY(-1px);
+}
+
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ── Card ── */
+.card{
+  background:#fff;border-radius:20px;
+  box-shadow:0 4px 20px rgba(255,110,199,.12);
+  padding:22px;margin-bottom:16px;
+  border:2px solid #ffe8f5;
+}
+.card-title{
+  font-size:1.05rem;font-weight:900;
+  background:linear-gradient(90deg,#ff6ec7,#ff9a3c);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:14px;letter-spacing:.03em;
+}
+
+/* ── Form ── */
+.row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+input[type=text],input[type=password],input[type=date],select{
+  flex:1;padding:10px 14px;border:2.5px solid #ffd6ee;border-radius:12px;
+  font-size:.9rem;font-weight:700;font-family:'Nunito',sans-serif;
+  outline:none;transition:border-color .18s;min-width:100px;color:#2d1b4e;
+  background:#fff9fd;
+}
+input:focus,select:focus{border-color:#ff6ec7;background:#fff}
+
+.btn{
+  padding:10px 18px;border:none;border-radius:12px;font-size:.9rem;font-weight:800;
+  cursor:pointer;transition:all .18s;white-space:nowrap;font-family:'M PLUS Rounded 1c',sans-serif;
+  letter-spacing:.02em;
+}
+.btn-primary{
+  background:linear-gradient(135deg,#ff6ec7,#d946a8);color:#fff;
+  box-shadow:0 4px 0 #a21479;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 0 #a21479}
+.btn-primary:active{transform:translateY(1px);box-shadow:0 2px 0 #a21479}
+
+.btn-success{
+  background:linear-gradient(135deg,#34d399,#10b981);color:#fff;
+  box-shadow:0 4px 0 #047857;
+}
+.btn-success:hover{transform:translateY(-2px);box-shadow:0 6px 0 #047857}
+.btn-success:active{transform:translateY(1px);box-shadow:0 2px 0 #047857}
+
+.btn-danger{
+  background:linear-gradient(135deg,#fb7185,#ef4444);color:#fff;
+  box-shadow:0 4px 0 #b91c1c;
+}
+.btn-danger:hover{transform:translateY(-2px);box-shadow:0 6px 0 #b91c1c}
+
+.btn-ghost{
+  background:#fff0f8;color:#c084b0;border:2px solid #ffd6ee;
+  box-shadow:0 3px 0 #ffc9e5;
+}
+.btn-ghost:hover{background:#ffe8f5;transform:translateY(-1px)}
+
+.msg{padding:10px 14px;border-radius:12px;font-size:.83rem;font-weight:700;margin-top:8px}
+.msg.ok{background:#dcfce7;color:#166534;border:2px solid #86efac}
+.msg.err{background:#fee2e2;color:#dc2626;border:2px solid #fca5a5}
+
+/* ── Chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{
+  display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;
+  font-size:.82rem;font-weight:800;border:2px solid transparent;
+}
+.chip-purple{background:#fce7f3;color:#be185d;border-color:#fbcfe8}
+.chip-green{background:#dcfce7;color:#166534;border-color:#86efac}
+.chip-gray{background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0}
+.chip .del{cursor:pointer;opacity:.5;font-size:.75rem;margin-left:2px}
+.chip .del:hover{opacity:1}
+
+/* ── Calendar ── */
+.month-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.month-nav h3{font-size:1rem;font-weight:900;flex:1;text-align:center;color:#2d1b4e}
+.month-nav button{
+  padding:6px 12px;border-radius:10px;border:2.5px solid #ffd6ee;
+  background:#fff9fd;cursor:pointer;font-size:.9rem;color:#c084b0;
+  font-weight:800;font-family:'M PLUS Rounded 1c',sans-serif;transition:all .15s;
+}
+.month-nav button:hover{background:#ffe8f5;transform:scale(1.05)}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-head{text-align:center;font-size:.72rem;font-weight:900;color:#94a3b8;padding:5px 0}
+.cal-head:first-child{color:#fb7185}
+.cal-head:last-child{color:#60a5fa}
+
+.cal-day{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;font-size:.84rem;font-weight:800;cursor:pointer;
+  border:2.5px solid transparent;transition:all .15s;user-select:none;color:#2d1b4e;
+}
+.cal-day:hover:not(.empty):not(.past){background:#ffe8f5;color:#d946a8;transform:scale(1.1)}
+.cal-day.selected{
+  background:linear-gradient(135deg,#ff6ec7,#d946a8);color:#fff;
+  border-color:#d946a8;box-shadow:0 3px 0 #a21479;transform:scale(1.05);
+}
+.cal-day.today{border-color:#ff6ec7;color:#ff6ec7}
+.cal-day.today.selected{color:#fff}
+.cal-day.empty{pointer-events:none}
+.cal-day.past{color:#e2e8f0;pointer-events:none}
+.cal-day.sun{color:#fb7185}.cal-day.sun.selected{color:#fff}
+.cal-day.sat{color:#60a5fa}.cal-day.sat.selected{color:#fff}
+
+/* ── Time chips ── */
+.time-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.time-chip{
+  padding:8px 16px;border-radius:20px;border:2.5px solid #ffd6ee;
+  background:#fff9fd;font-size:.84rem;font-weight:800;cursor:pointer;
+  transition:all .15s;color:#c084b0;font-family:'M PLUS Rounded 1c',sans-serif;
+}
+.time-chip:hover:not(.selected){background:#ffe8f5;border-color:#ffb3d9;color:#d946a8;transform:scale(1.05)}
+.time-chip.selected{
+  background:linear-gradient(135deg,#ff6ec7,#d946a8);color:#fff;
+  border-color:#d946a8;box-shadow:0 3px 0 #a21479;transform:scale(1.05);
+}
+
+/* ── Slot preview ── */
+.slot-date-group{margin-bottom:10px}
+.slot-date-label{font-size:.85rem;font-weight:900;color:#2d1b4e;margin-bottom:5px}
+.slot-times{display:flex;flex-wrap:wrap;gap:5px}
+.slot-time-badge{
+  background:linear-gradient(135deg,#fce7f3,#fff0f8);color:#be185d;
+  padding:4px 11px;border-radius:12px;font-size:.76rem;font-weight:800;
+  border:2px solid #fbcfe8;
+}
+
+/* ── Member select grid ── */
+.member-select{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.member-select-btn{
+  padding:12px 8px;border:2.5px solid #ffd6ee;border-radius:14px;
+  background:#fff9fd;cursor:pointer;font-size:.9rem;font-weight:800;
+  color:#c084b0;transition:all .18s;text-align:center;
+  font-family:'M PLUS Rounded 1c',sans-serif;box-shadow:0 3px 0 #ffc9e5;
+}
+.member-select-btn:hover{border-color:#ff6ec7;color:#d946a8;transform:translateY(-2px)}
+.member-select-btn.active{
+  background:linear-gradient(135deg,#ff6ec7,#d946a8);
+  color:#fff;border-color:#d946a8;
+  box-shadow:0 4px 0 #a21479;transform:translateY(-2px);
+}
+
+/* ── Schedule table ── */
+.overflow-x{overflow-x:auto;border-radius:14px}
+.schedule-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.84rem}
+.schedule-table th{
+  background:linear-gradient(135deg,#ff6ec7,#d946a8);color:#fff;
+  padding:10px 8px;text-align:center;font-weight:900;font-size:.82rem;letter-spacing:.03em;
+}
+.schedule-table th:first-child{text-align:left;border-radius:14px 0 0 0;padding-left:14px;min-width:72px}
+.schedule-table th:last-child{border-radius:0 14px 0 0}
+.schedule-table td{
+  padding:5px 4px;border-bottom:2px solid #fff5f9;text-align:center;
+  background:#fff;
+}
+.schedule-table tr:last-child td{border-bottom:none}
+.schedule-table td:first-child{
+  font-weight:900;color:#c084b0;text-align:left;padding-left:14px;
+  background:#fff9fd;font-size:.8rem;
+}
+.schedule-table tbody tr:hover td{background:#fff0fa}
+.schedule-table tbody tr:hover td:first-child{background:#ffe8f5}
+
+.slot-toggle{
+  width:100%;padding:8px 4px;border:2.5px solid #ffd6ee;border-radius:10px;
+  cursor:pointer;font-size:1.05rem;font-weight:900;background:#fff9fd;
+  transition:all .15s;font-family:'Nunito',sans-serif;color:#e2d0ea;
+}
+.slot-toggle:hover{transform:scale(1.08);border-color:#ff6ec7}
+.slot-toggle.maru{
+  background:linear-gradient(135deg,#d1fae5,#a7f3d0);
+  border-color:#34d399;color:#065f46;
+  box-shadow:0 3px 0 #059669;transform:scale(1.04);
+}
+.slot-toggle.batu{
+  background:linear-gradient(135deg,#ffe4e6,#fecdd3);
+  border-color:#fb7185;color:#9f1239;
+  box-shadow:0 3px 0 #e11d48;transform:scale(1.04);
+}
+
+/* ── Result table ── */
+.result-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.82rem}
+.result-table th{
+  background:linear-gradient(135deg,#ff6ec7,#d946a8);color:#fff;
+  padding:10px 6px;text-align:center;font-weight:900;
+}
+.result-table th:first-child{text-align:left;padding-left:12px;border-radius:14px 0 0 0}
+.result-table th:last-child{border-radius:0 14px 0 0}
+.result-table td{
+  padding:7px 5px;border-bottom:2px solid #fff5f9;text-align:center;background:#fff;
+}
+.result-table td:first-child{text-align:left;padding-left:12px;font-weight:900;color:#c084b0;background:#fff9fd;font-size:.8rem}
+.rc-all{background:linear-gradient(135deg,#d1fae5,#a7f3d0)!important;color:#065f46;font-weight:900;border-radius:8px}
+.rc-some{background:linear-gradient(135deg,#fef9c3,#fde68a)!important;color:#854d0e;font-weight:900;border-radius:8px}
+.rc-none{background:linear-gradient(135deg,#ffe4e6,#fecdd3)!important;color:#9f1239;font-weight:900;border-radius:8px}
+
+/* ── Auth ── */
+
+/* ── Misc ── */
+.cal-label{font-size:.8rem;font-weight:900;color:#c084b0;margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+.empty-state{text-align:center;padding:40px 20px;color:#c084b0;font-size:.9rem;font-weight:700}
+
+.section-note{font-size:.8rem;font-weight:700;color:#c084b0;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <div class="logo-icon">📅</div>
+    <div class="logo-text">
+      <h1>KOKOOK</h1>
+      <span class="logo-sub">ここOK スケジュール調整</span>
+    </div>
+  </div>
+  <div class="header-date" id="header-sub"></div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('input')">◎✖ 入力</button>
+    <button class="tab-btn" onclick="switchTab('results')">結果</button>
+    <button class="tab-btn" onclick="switchTab('admin')">管理者</button>
+  </div>
+
+  <!-- ===== INPUT TAB ===== -->
+  <div id="tab-input" class="tab-pane active">
+    <div class="card" id="no-slots-notice" style="display:none">
+      <div class="empty-state">
+        管理者がまだ日程を設定していません。<br>「管理者」タブから日付・時間帯を設定してください。
+      </div>
+    </div>
+
+    <div id="input-body">
+      <div class="card">
+        <div class="card-title">名前を選択</div>
+        <div id="member-select-grid" class="member-select"></div>
+        <div id="name-msg" class="msg" style="display:none"></div>
+      </div>
+
+      <div class="card" id="grid-card" style="display:none">
+        <div class="card-title" id="grid-title">スケジュール入力</div>
+        <p class="section-note">各マスをタップ → ◎（参加可）/ ✖（参加不可）を切り替え</p>
+        <div class="overflow-x">
+          <table class="schedule-table" id="input-table"></table>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost" onclick="clearInput()">クリア</button>
+          <button class="btn btn-success" onclick="submitResponse()">送信する</button>
+        </div>
+        <div id="submit-msg" class="msg" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS TAB ===== -->
+  <div id="tab-results" class="tab-pane">
+    <div class="card">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>集計結果</span>
+        <button class="btn btn-ghost" style="font-size:.78rem;padding:6px 12px" onclick="loadResults()">更新</button>
+      </div>
+      <div style="display:flex;gap:14px;font-size:.8rem;font-weight:800;margin-bottom:14px;flex-wrap:wrap">
+        <span style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);padding:4px 12px;border-radius:12px;color:#065f46;border:2px solid #34d399">◎ 全員OK</span>
+        <span style="background:linear-gradient(135deg,#fef9c3,#fde68a);padding:4px 12px;border-radius:12px;color:#854d0e;border:2px solid #fbbf24">△ 一部OK</span>
+        <span style="background:linear-gradient(135deg,#ffe4e6,#fecdd3);padding:4px 12px;border-radius:12px;color:#9f1239;border:2px solid #fb7185">✖ 全員NG</span>
+      </div>
+      <div class="overflow-x"><table class="result-table" id="result-table"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">回答状況</div>
+      <div id="answer-status" class="chips"></div>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN TAB ===== -->
+  <div id="tab-admin" class="tab-pane">
+
+    <!-- GitHub Gist setup -->
+    <div class="card" id="firebase-setup-card">
+      <div class="card-title">クラウド接続設定（GitHub Gist）</div>
+      <div style="background:#fff5f9;border:2px dashed #ffd6ee;border-radius:12px;padding:14px;margin-bottom:14px;font-size:.78rem;font-weight:700;color:#c084b0;line-height:2">
+        <b style="color:#d946a8">① トークン取得</b><br>
+        <a href="https://github.com/settings/tokens/new" target="_blank" style="color:#d946a8">github.com/settings/tokens/new</a> を開く<br>
+        Note に「KOKOOK」と入力 → <b>gist</b> にチェック → 「Generate token」→ コピー<br><br>
+        <b style="color:#d946a8">② Gist作成</b><br>
+        <a href="https://gist.github.com" target="_blank" style="color:#d946a8">gist.github.com</a> を開く<br>
+        ファイル名：<b>kokook-data.json</b>　内容：<b>{}</b><br>
+        「Create secret gist」をクリック<br><br>
+        <b style="color:#d946a8">③ Gist ID取得</b><br>
+        URLの最後の文字列（例: <b>https://gist.github.com/xxxxx/<u>abc123def456</u></b>）
+      </div>
+      <div class="row">
+        <input type="password" id="github-token-input" placeholder="GitHub トークン（ghp_xxxxx）">
+      </div>
+      <div class="row">
+        <input type="text" id="gist-id-input" placeholder="Gist ID（URLの末尾）">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="saveGistConfig()">接続する</button>
+      <div id="firebase-msg" class="msg" style="display:none"></div>
+    </div>
+
+    <div class="card" id="admin-auth-card">
+      <div class="card-title">管理者ログイン</div>
+      <div class="row">
+        <input type="password" id="admin-key-input" placeholder="管理者キーを入力">
+        <button class="btn btn-primary" onclick="adminAuth()">認証</button>
+      </div>
+      <div id="auth-msg" class="msg" style="display:none"></div>
+    </div>
+
+    <div id="admin-panel" style="display:none">
+
+      <!-- Date picker -->
+      <div class="card">
+        <div class="card-title">日付を選択</div>
+        <div class="cal-label" style="margin-bottom:8px">クイック設定</div>
+        <div class="quick-strip">
+          <button class="quick-btn" onclick="quickSet('today')">今日だけ</button>
+          <button class="quick-btn" onclick="quickSet('tomorrow')">明日だけ</button>
+          <button class="quick-btn" onclick="quickSet('thisweek')">今週（月〜金）</button>
+          <button class="quick-btn" onclick="quickSet('nextweek')">来週（月〜金）</button>
+          <button class="quick-btn" onclick="quickSet('3days')">今日から3日間</button>
+        </div>
+        <div class="cal-label" style="margin-bottom:8px;margin-top:4px">カレンダーから選ぶ</div>
+        <div class="month-nav">
+          <button onclick="prevMonth()">‹</button>
+          <h3 id="month-label"></h3>
+          <button onclick="nextMonth()">›</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div style="margin-top:10px;font-size:.82rem;font-weight:800;color:#c084b0">
+          選択中: <span id="selected-dates-count" style="color:#d946a8;font-size:1rem">0</span> 日
+        </div>
+      </div>
+
+      <!-- Time slot picker -->
+      <div class="card">
+        <div class="card-title">時間帯を選択</div>
+        <div class="cal-label">プリセット</div>
+        <div class="time-grid" id="time-preset-grid"></div>
+        <div style="margin-top:16px">
+          <div class="cal-label">カスタム時間</div>
+          <div class="row">
+            <select id="custom-hour">
+              <option value="06">6時</option><option value="07">7時</option>
+              <option value="08">8時</option><option value="09">9時</option>
+              <option value="10">10時</option><option value="11">11時</option>
+              <option value="12">12時</option><option value="13">13時</option>
+              <option value="14">14時</option><option value="15">15時</option>
+              <option value="16">16時</option><option value="17">17時</option>
+              <option value="18">18時</option><option value="19">19時</option>
+              <option value="20">20時</option><option value="21">21時</option>
+            </select>
+            <select id="custom-min">
+              <option value="00">00分</option>
+              <option value="30">30分</option>
+            </select>
+            <button class="btn btn-ghost" onclick="addCustomTime()">＋ 追加</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slot preview -->
+      <div class="card">
+        <div class="card-title">設定プレビュー</div>
+        <div id="slot-preview"></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:14px;padding:13px;font-size:.95rem" onclick="saveSlots()">この日程を保存・反映する</button>
+        <div id="slots-msg" class="msg" style="display:none"></div>
+      </div>
+
+      <!-- Members -->
+      <div class="card">
+        <div class="card-title">メンバー管理</div>
+        <div class="row">
+          <input type="text" id="admin-name" placeholder="メンバー名を入力">
+          <button class="btn btn-primary" onclick="addMember()">＋ 追加</button>
+        </div>
+        <div id="admin-member-list" class="chips" style="margin-top:10px"></div>
+        <div id="admin-member-msg" class="msg" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── 管理者キー（変更可） ─────────────────────────────────────────────
+const ADMIN_KEY = 'admin123';
+
+// ── State ────────────────────────────────────────────────────────────
+let gistId = '';
+let githubToken = '';
+let pollTimer = null;
+let appData = { members: [], responses: {}, slots: [] };
+let currentUser = null;
+let currentResponses = {};
+let adminKey = '';
+let activeTab = 'input';
+
+let calYear, calMonth;
+let selectedDates = new Set();
+let selectedTimes = new Set();
+
+const PRESET_TIMES = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'];
+const DOW = ['日','月','火','水','木','金','土'];
+const GIST_FILE = 'kokook-data.json';
+
+// ── Init ─────────────────────────────────────────────────────────────
+(function init() {
+  const now = new Date();
+  calYear = now.getFullYear(); calMonth = now.getMonth();
+  buildTimePresets(); buildCalendar();
+  renderInputTab();
+
+  const saved = localStorage.getItem('kokook_gist_config');
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      gistId = c.gistId; githubToken = c.githubToken;
+      document.getElementById('firebase-setup-card').style.display = 'none';
+      startPolling();
+    } catch(e) {}
+  }
+})();
+
+// ── GitHub Gist API ───────────────────────────────────────────────────
+async function gistRead() {
+  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+    headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) throw new Error(`読み込みエラー (${res.status})`);
+  const gist = await res.json();
+  const content = gist.files[GIST_FILE]?.content || '{}';
+  return JSON.parse(content);
+}
+
+async function gistWrite(data) {
+  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `token ${githubToken}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    },
+    body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(data, null, 2) } } })
+  });
+  if (!res.ok) throw new Error(`保存エラー (${res.status})`);
+}
+
+async function saveGistConfig() {
+  const token = document.getElementById('github-token-input').value.trim();
+  const id = document.getElementById('gist-id-input').value.trim();
+  if (!token || !id) return showMsg('firebase-msg','トークンとGist IDを入力してください','err');
+  githubToken = token; gistId = id;
+  try {
+    // Gistにファイルがなければ初期データを書き込む
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!res.ok) throw new Error(`Gistにアクセスできません (${res.status})`);
+    const gist = await res.json();
+    if (!gist.files[GIST_FILE]) {
+      await gistWrite({ members: [], slots: [], responses: {} });
+    }
+    localStorage.setItem('kokook_gist_config', JSON.stringify({ gistId, githubToken }));
+    document.getElementById('firebase-setup-card').style.display = 'none';
+    showMsg('firebase-msg','接続しました！','ok');
+    startPolling();
+  } catch(e) {
+    showMsg('firebase-msg','エラー: '+e.message,'err');
+  }
+}
+
+function startPolling() {
+  refreshData();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(refreshData, 10000); // 10秒ごとに同期
+}
+
+async function refreshData() {
+  if (!gistId || !githubToken) return;
+  try {
+    const d = await gistRead();
+    appData = {
+      members: Array.isArray(d.members) ? d.members : [],
+      responses: d.responses || {},
+      slots: Array.isArray(d.slots) ? d.slots : [],
+    };
+    updateHeaderSub();
+    renderInputTab();
+    if (activeTab === 'results') renderResults();
+    if (activeTab === 'admin' && adminKey) renderAdminMembers();
+  } catch(e) { console.warn('同期エラー', e); }
+}
+
+function updateHeaderSub() {
+  const el = document.getElementById('header-sub');
+  if (!appData?.slots?.length) { el.textContent = ''; return; }
+  const dates = [...new Set(appData.slots.map(s => s.date))].sort();
+  const fmt = d => { const dow = DOW[new Date(d).getDay()]; const [,m,dd] = d.split('-'); return `${+m}/${+dd}(${dow})`; };
+  el.textContent = dates.length === 1 ? fmt(dates[0]) : `${fmt(dates[0])} 〜 ${fmt(dates[dates.length-1])}`;
+}
+
+function quickSet(type) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dates = [];
+  if (type === 'today') {
+    dates.push(new Date(today));
+  } else if (type === 'tomorrow') {
+    const d = new Date(today); d.setDate(d.getDate()+1); dates.push(d);
+  } else if (type === '3days') {
+    for(let i=0;i<3;i++){const d=new Date(today);d.setDate(d.getDate()+i);dates.push(d);}
+  } else if (type === 'thisweek' || type === 'nextweek') {
+    const offset = type === 'nextweek' ? 7 : 0;
+    const dow = today.getDay();
+    const mon = new Date(today); mon.setDate(today.getDate() - (dow===0?6:dow-1) + offset);
+    for(let i=0;i<5;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);if(d>=today||type==='nextweek')dates.push(d);}
+  }
+  selectedDates = new Set(dates.map(toDateStr));
+  // Navigate calendar to the right month
+  if (dates.length) { calYear=dates[0].getFullYear(); calMonth=dates[0].getMonth(); }
+  buildCalendar(); updateSlotPreview();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['input','results','admin'][i] === tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (tab === 'results') renderResults();
+}
+
+function renderInputTab() {
+  const noSlots = document.getElementById('no-slots-notice');
+  const body = document.getElementById('input-body');
+  if (!appData?.slots?.length) { noSlots.style.display=''; body.style.display='none'; return; }
+  noSlots.style.display='none'; body.style.display='';
+  const grid = document.getElementById('member-select-grid');
+  grid.innerHTML = '';
+  (appData.members||[]).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'member-select-btn' + (currentUser===name?' active':'');
+    btn.textContent = name + (appData.responses?.[name] ? ' ✓' : '');
+    btn.onclick = () => selectUser(name);
+    grid.appendChild(btn);
+  });
+}
+
+function selectUser(name) {
+  currentUser = name;
+  currentResponses = { ...(appData.responses?.[name]||{}) };
+  document.querySelectorAll('.member-select-btn').forEach(b => b.classList.toggle('active', b.textContent.startsWith(name)));
+  document.getElementById('grid-card').style.display='';
+  document.getElementById('grid-title').textContent = `${name}さんのスケジュール入力`;
+  buildInputTable();
+  hideMsg('name-msg'); hideMsg('submit-msg');
+}
+
+function buildInputTable() {
+  const table = document.getElementById('input-table');
+  table.innerHTML = '';
+  const byDate = {};
+  for (const s of appData.slots) { if (!byDate[s.date]) byDate[s.date]=[]; byDate[s.date].push(s.time); }
+  const dates = Object.keys(byDate).sort();
+  const allTimes = [...new Set(appData.slots.map(s=>s.time))].sort();
+
+  const thead = table.createTHead(); const hr = thead.insertRow();
+  const th0 = document.createElement('th'); th0.textContent='時間帯'; hr.appendChild(th0);
+  dates.forEach(d => { const th=document.createElement('th'); th.textContent=formatDateShort(d); hr.appendChild(th); });
+
+  const tbody = table.createTBody();
+  allTimes.forEach(time => {
+    const tr = tbody.insertRow();
+    const td0 = tr.insertCell(); td0.textContent=time;
+    dates.forEach(d => {
+      const td = tr.insertCell();
+      if (!byDate[d].includes(time)) { td.style.background='#fff9fd'; return; }
+      const slotId = `${d}_${time}`;
+      const val = currentResponses[slotId];
+      const btn = document.createElement('button');
+      btn.className = 'slot-toggle'+(val==='◎'?' maru':val==='✖'?' batu':'');
+      btn.textContent = val||'';
+      btn.onclick = () => {
+        const next = (!currentResponses[slotId]||currentResponses[slotId]==='✖') ? '◎' : '✖';
+        currentResponses[slotId] = next;
+        btn.className = 'slot-toggle'+(next==='◎'?' maru':' batu');
+        btn.textContent = next;
+      };
+      td.appendChild(btn);
+    });
+  });
+}
+
+function clearInput() { currentResponses={}; buildInputTable(); }
+
+async function submitResponse() {
+  if (!currentUser) return;
+  if (!gistId) return showMsg('submit-msg','クラウド未接続です','err');
+  for (const s of appData.slots) { if (!currentResponses[s.id]) currentResponses[s.id]='✖'; }
+  try {
+    const latest = await gistRead();
+    latest.responses = latest.responses || {};
+    latest.responses[currentUser] = currentResponses;
+    await gistWrite(latest);
+    appData.responses[currentUser] = currentResponses;
+    showMsg('submit-msg','送信しました！','ok');
+    renderInputTab();
+  } catch(e) { showMsg('submit-msg','エラー: '+e.message,'err'); }
+}
+
+async function loadResults() { renderResults(); }
+
+function renderResults() {
+  const {slots=[],members=[],responses={}} = appData;
+  const answered = members.filter(m=>responses[m]);
+
+  const statusEl = document.getElementById('answer-status');
+  statusEl.innerHTML='';
+  members.forEach(m => {
+    const span=document.createElement('span');
+    span.className='chip '+(responses[m]?'chip-green':'chip-gray');
+    span.textContent=m+(responses[m]?' ✓':' 未回答');
+    statusEl.appendChild(span);
+  });
+
+  const table=document.getElementById('result-table'); table.innerHTML='';
+  if (!slots.length) { table.innerHTML='<tr><td style="padding:30px;text-align:center;color:#c084b0;font-weight:800">日程が設定されていません</td></tr>'; return; }
+
+  const byDate={};
+  for (const s of slots) { if (!byDate[s.date]) byDate[s.date]=[]; byDate[s.date].push(s.time); }
+  const dates=Object.keys(byDate).sort();
+  const allTimes=[...new Set(slots.map(s=>s.time))].sort();
+  const total=answered.length;
+
+  const thead=table.createTHead(); const hr=thead.insertRow();
+  const th0=document.createElement('th'); th0.textContent='時間帯'; hr.appendChild(th0);
+  dates.forEach(d=>{const th=document.createElement('th');th.textContent=formatDateShort(d);hr.appendChild(th);});
+
+  const tbody=table.createTBody();
+  allTimes.forEach(time=>{
+    const tr=tbody.insertRow();
+    const td0=tr.insertCell(); td0.textContent=time;
+    dates.forEach(d=>{
+      const td=tr.insertCell();
+      if (!byDate[d].includes(time)){td.style.background='#fff9fd';return;}
+      const slotId=`${d}_${time}`;
+      let ok=0;
+      answered.forEach(m=>{if(responses[m]?.[slotId]==='◎')ok++;});
+      if (total===0){td.textContent='-';td.style.color='#c084b0';return;}
+      td.className=ok===total?'rc-all':ok>0?'rc-some':'rc-none';
+      td.innerHTML=(ok===total?'◎':ok>0?'△':'✖')+`<br><small style="font-size:.7rem">${ok}/${total}</small>`;
+    });
+  });
+}
+
+function adminAuth() {
+  const key=document.getElementById('admin-key-input').value;
+  if (!key) return showMsg('auth-msg','キーを入力してください','err');
+  if (key !== ADMIN_KEY) return showMsg('auth-msg','管理者キーが違います','err');
+  adminKey=key;
+  document.getElementById('admin-auth-card').style.display='none';
+  document.getElementById('admin-panel').style.display='';
+  renderAdminMembers(); syncAdminCalendar();
+}
+
+function syncAdminCalendar() {
+  if (!appData?.slots?.length) return;
+  selectedDates=new Set([...new Set(appData.slots.map(s=>s.date))]);
+  selectedTimes=new Set([...new Set(appData.slots.map(s=>s.time))]);
+  buildCalendar(); buildTimePresets(); updateSlotPreview();
+}
+
+function buildCalendar() {
+  const label=document.getElementById('month-label');
+  if (label) label.textContent=`${calYear}年 ${calMonth+1}月`;
+  const grid=document.getElementById('cal-grid');
+  if (!grid) return;
+  grid.innerHTML='';
+  DOW.forEach(d=>{const h=document.createElement('div');h.className='cal-head';h.textContent=d;grid.appendChild(h);});
+  const today=new Date(); today.setHours(0,0,0,0);
+  const first=new Date(calYear,calMonth,1);
+  const last=new Date(calYear,calMonth+1,0);
+  for(let i=0;i<first.getDay();i++){const el=document.createElement('div');el.className='cal-day empty';grid.appendChild(el);}
+  for(let d=1;d<=last.getDate();d++){
+    const date=new Date(calYear,calMonth,d);
+    const dateStr=toDateStr(date);
+    const dow=date.getDay();
+    const isPast=date<today; const isToday=date.getTime()===today.getTime();
+    const isSel=selectedDates.has(dateStr);
+    let cls='cal-day';
+    if(isPast)cls+=' past'; if(isToday)cls+=' today';
+    if(isSel)cls+=' selected';
+    if(dow===0)cls+=' sun'; if(dow===6)cls+=' sat';
+    const el=document.createElement('div');
+    el.className=cls; el.textContent=d;
+    if(!isPast)el.onclick=()=>toggleDate(dateStr,el);
+    grid.appendChild(el);
+  }
+  updateSelectedCount();
+}
+
+function toggleDate(dateStr,el){
+  if(selectedDates.has(dateStr)){selectedDates.delete(dateStr);el.classList.remove('selected');}
+  else{selectedDates.add(dateStr);el.classList.add('selected');}
+  updateSelectedCount(); updateSlotPreview();
+}
+function prevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalendar();}
+function nextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalendar();}
+function updateSelectedCount(){document.getElementById('selected-dates-count').textContent=selectedDates.size;}
+
+function buildTimePresets(){
+  const grid=document.getElementById('time-preset-grid');
+  if(!grid)return; grid.innerHTML='';
+  const allTimes=new Set([...PRESET_TIMES,...selectedTimes]);
+  [...allTimes].sort().forEach(t=>{
+    const chip=document.createElement('div');
+    chip.className='time-chip'+(selectedTimes.has(t)?' selected':'');
+    chip.textContent=t;
+    chip.onclick=()=>{
+      if(selectedTimes.has(t))selectedTimes.delete(t);
+      else selectedTimes.add(t);
+      chip.classList.toggle('selected');
+      updateSlotPreview();
+    };
+    grid.appendChild(chip);
+  });
+}
+
+function addCustomTime(){
+  const h=document.getElementById('custom-hour').value;
+  const m=document.getElementById('custom-min').value;
+  selectedTimes.add(`${h}:${m}`);
+  buildTimePresets(); updateSlotPreview();
+}
+
+function updateSlotPreview(){
+  const el=document.getElementById('slot-preview');
+  if(!el)return;
+  const dates=[...selectedDates].sort();
+  const times=[...selectedTimes].sort();
+  if(!dates.length||!times.length){el.innerHTML='<p style="color:#c084b0;font-size:.84rem;font-weight:700">日付と時間帯を選択してください</p>';return;}
+  let html='';
+  dates.forEach(d=>{
+    html+=`<div class="slot-date-group"><div class="slot-date-label">${formatDateFull(d)}</div><div class="slot-times">`;
+    times.forEach(t=>{html+=`<span class="slot-time-badge">${t}</span>`;});
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+async function saveSlots(){
+  if(!gistId) return showMsg('slots-msg','クラウド未接続です','err');
+  const dates=[...selectedDates].sort(); const times=[...selectedTimes].sort();
+  if(!dates.length||!times.length)return showMsg('slots-msg','日付と時間帯を選択してください','err');
+  const slots=[];
+  dates.forEach(d=>times.forEach(t=>slots.push({id:`${d}_${t}`,date:d,time:t})));
+  try {
+    await gistWrite({ ...appData, slots, responses:{} });
+    showMsg('slots-msg',`保存しました（${slots.length}スロット）。回答はリセットされました。`,'ok');
+    await refreshData();
+  } catch(e) { showMsg('slots-msg','エラー: '+e.message,'err'); }
+}
+
+function renderAdminMembers(){
+  const list=document.getElementById('admin-member-list'); list.innerHTML='';
+  (appData.members||[]).forEach(name=>{
+    const chip=document.createElement('span');
+    chip.className='chip chip-purple';
+    chip.innerHTML=`${name} <span class="del" onclick="removeMember('${name}')">✕</span>`;
+    list.appendChild(chip);
+  });
+}
+
+async function addMember(){
+  if(!gistId) return showMsg('admin-member-msg','クラウド未接続です','err');
+  const name=document.getElementById('admin-name').value.trim();
+  if(!name)return showMsg('admin-member-msg','名前を入力してください','err');
+  if(appData.members.includes(name))return showMsg('admin-member-msg','すでに登録済みです','err');
+  try {
+    const newMembers=[...appData.members, name];
+    await gistWrite({...appData, members:newMembers});
+    document.getElementById('admin-name').value='';
+    showMsg('admin-member-msg',`${name} を追加しました`,'ok');
+    await refreshData();
+  } catch(e){ showMsg('admin-member-msg','エラー: '+e.message,'err'); }
+}
+
+async function removeMember(name){
+  if(!confirm(`${name} を削除しますか？`))return;
+  try {
+    const newMembers=appData.members.filter(m=>m!==name);
+    const newResponses={...appData.responses}; delete newResponses[name];
+    await gistWrite({...appData, members:newMembers, responses:newResponses});
+    await refreshData();
+  } catch(e){ alert('エラー: '+e.message); }
+}
+
+function toDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function formatDateShort(s){const [,m,d]=s.split('-');const dow=DOW[new Date(s).getDay()];return `${+m}/${+d}(${dow})`;}
+function formatDateFull(s){const [,m,d]=s.split('-');const dow=DOW[new Date(s).getDay()];return `${+m}月${+d}日(${dow})`;}
+function showMsg(id,text,type){const el=document.getElementById(id);el.textContent=text;el.className='msg '+type;el.style.display='';setTimeout(()=>{el.style.display='none';},5000);}
+function hideMsg(id){document.getElementById(id).style.display='none';}
+</script>
+</body>
+</html>
