@@ -410,12 +410,12 @@ input:focus,select:focus{border-color:#ff6ec7;background:#fff}
       </div>
     </div>
 
-    <!-- トークン入力（別PCや別ブラウザで管理者操作する場合） -->
-    <div class="card" id="token-input-card" style="display:none">
-      <div class="card-title">書き込み用トークン</div>
-      <p style="font-size:.8rem;font-weight:700;color:#c084b0;margin-bottom:10px">日程・メンバーの変更にはGitHubトークンが必要です</p>
+    <!-- トークン状態カード（常時表示） -->
+    <div class="card" id="token-input-card">
+      <div class="card-title">GitHubトークン</div>
+      <div id="token-status" style="font-size:.82rem;font-weight:800;margin-bottom:10px"></div>
       <div class="row">
-        <input type="password" id="token-input-field" placeholder="GitHubトークン（ghp_xxxxx）">
+        <input type="password" id="token-input-field" placeholder="ghp_xxxxx（トークンを貼り付け）">
         <button class="btn btn-primary" onclick="applyToken()">設定</button>
       </div>
       <div id="token-msg" class="msg" style="display:none"></div>
@@ -558,9 +558,7 @@ const GIST_FILE = 'kokook-data.json';
   // 管理者URLかつGist設定済み → 即座に管理者パネルを開く
   if (isAdmin && rawBase) {
     document.getElementById('admin-panel').style.display = '';
-    // トークンがなければ書き込み用トークン入力欄を表示
-    if (!githubToken) document.getElementById('token-input-card').style.display = '';
-    // 共有URLを表示
+    updateTokenStatus();
     showShareUrls();
     syncAdminCalendar();
   }
@@ -821,6 +819,15 @@ function showShareUrls() {
   document.getElementById('admin-url-text').value  = `${base}?gist=${gp}&admin`;
 }
 
+function updateTokenStatus() {
+  const el = document.getElementById('token-status');
+  if (githubToken) {
+    el.innerHTML = `<span style="color:#10b981">トークン設定済み</span> <span style="color:#c084b0;font-weight:600">（変更する場合は下に貼り付けて設定）</span>`;
+  } else {
+    el.innerHTML = `<span style="color:#ef4444">トークン未設定 → 保存操作ができません。下に貼り付けてください。</span>`;
+  }
+}
+
 function applyToken() {
   const t = document.getElementById('token-input-field').value.trim();
   if (!t) return showMsg('token-msg','トークンを入力してください','err');
@@ -828,8 +835,9 @@ function applyToken() {
   const saved = localStorage.getItem('kokook_gist_config');
   const c = saved ? JSON.parse(saved) : {};
   localStorage.setItem('kokook_gist_config', JSON.stringify({...c, githubToken: t}));
-  document.getElementById('token-input-card').style.display = 'none';
-  showMsg('token-msg','トークンを設定しました','ok');
+  document.getElementById('token-input-field').value = '';
+  updateTokenStatus();
+  showMsg('token-msg','トークンを設定しました。もう一度保存してみてください。','ok');
 }
 
 function syncAdminCalendar() {
