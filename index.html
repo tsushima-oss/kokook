@@ -410,13 +410,15 @@ input:focus,select:focus{border-color:#ff6ec7;background:#fff}
       </div>
     </div>
 
-    <div class="card" id="admin-auth-card">
-      <div class="card-title">管理者ログイン</div>
+    <!-- トークン入力（別PCや別ブラウザで管理者操作する場合） -->
+    <div class="card" id="token-input-card" style="display:none">
+      <div class="card-title">書き込み用トークン</div>
+      <p style="font-size:.8rem;font-weight:700;color:#c084b0;margin-bottom:10px">日程・メンバーの変更にはGitHubトークンが必要です</p>
       <div class="row">
-        <input type="password" id="admin-key-input" placeholder="管理者キーを入力">
-        <button class="btn btn-primary" onclick="adminAuth()">認証</button>
+        <input type="password" id="token-input-field" placeholder="GitHubトークン（ghp_xxxxx）">
+        <button class="btn btn-primary" onclick="applyToken()">設定</button>
       </div>
-      <div id="auth-msg" class="msg" style="display:none"></div>
+      <div id="token-msg" class="msg" style="display:none"></div>
     </div>
 
     <div id="admin-panel" style="display:none">
@@ -553,6 +555,16 @@ const GIST_FILE = 'kokook-data.json';
     } catch(e) {}
   }
 
+  // 管理者URLかつGist設定済み → 即座に管理者パネルを開く
+  if (isAdmin && rawBase) {
+    document.getElementById('admin-panel').style.display = '';
+    // トークンがなければ書き込み用トークン入力欄を表示
+    if (!githubToken) document.getElementById('token-input-card').style.display = '';
+    // 共有URLを表示
+    showShareUrls();
+    syncAdminCalendar();
+  }
+
   if (rawBase) startPolling();
 })();
 
@@ -606,9 +618,9 @@ async function saveGistConfig() {
     history.replaceState({}, '', adminUrl);
 
     document.getElementById('firebase-setup-card').style.display = 'none';
-    document.getElementById('share-urls-card').style.display = '';
-    document.getElementById('member-url-text').value = memberUrl;
-    document.getElementById('admin-url-text').value  = adminUrl;
+    document.getElementById('admin-panel').style.display = '';
+    showShareUrls();
+    syncAdminCalendar();
     startPolling();
   } catch(e) {
     showMsg('firebase-msg','エラー: '+e.message,'err');
@@ -633,7 +645,7 @@ async function refreshData() {
     updateHeaderSub();
     renderInputTab();
     if (activeTab === 'results') renderResults();
-    if (activeTab === 'admin' && adminKey) renderAdminMembers();
+    if (activeTab === 'admin') renderAdminMembers();
   } catch(e) { console.warn('同期エラー', e); }
 }
 
@@ -800,14 +812,24 @@ function renderResults() {
   });
 }
 
-function adminAuth() {
-  const key=document.getElementById('admin-key-input').value;
-  if (!key) return showMsg('auth-msg','キーを入力してください','err');
-  if (key !== ADMIN_KEY) return showMsg('auth-msg','管理者キーが違います','err');
-  adminKey=key;
-  document.getElementById('admin-auth-card').style.display='none';
-  document.getElementById('admin-panel').style.display='';
-  renderAdminMembers(); syncAdminCalendar();
+function showShareUrls() {
+  if (!gistOwner || !gistId) return;
+  const base = location.origin + location.pathname;
+  const gp = `${gistOwner}/${gistId}`;
+  document.getElementById('share-urls-card').style.display = '';
+  document.getElementById('member-url-text').value = `${base}?gist=${gp}`;
+  document.getElementById('admin-url-text').value  = `${base}?gist=${gp}&admin`;
+}
+
+function applyToken() {
+  const t = document.getElementById('token-input-field').value.trim();
+  if (!t) return showMsg('token-msg','トークンを入力してください','err');
+  githubToken = t;
+  const saved = localStorage.getItem('kokook_gist_config');
+  const c = saved ? JSON.parse(saved) : {};
+  localStorage.setItem('kokook_gist_config', JSON.stringify({...c, githubToken: t}));
+  document.getElementById('token-input-card').style.display = 'none';
+  showMsg('token-msg','トークンを設定しました','ok');
 }
 
 function syncAdminCalendar() {
