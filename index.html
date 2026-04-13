@@ -311,7 +311,7 @@ input:focus,select:focus{border-color:#ff6ec7;background:#fff}
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('input')">◎✖ 入力</button>
     <button class="tab-btn" onclick="switchTab('results')">結果</button>
-    <button class="tab-btn" onclick="switchTab('admin')">管理者</button>
+    <button class="tab-btn" id="admin-tab-btn" onclick="switchTab('admin')" style="display:none">管理者</button>
   </div>
 
   <!-- ===== INPUT TAB ===== -->
@@ -505,6 +505,10 @@ const GIST_FILE = 'kokook-data.json';
   buildTimePresets(); buildCalendar();
   renderInputTab();
 
+  // ?admin がURLにあれば管理者タブを表示
+  const isAdmin = new URLSearchParams(location.search).has('admin');
+  if (isAdmin) document.getElementById('admin-tab-btn').style.display = '';
+
   const saved = localStorage.getItem('kokook_gist_config');
   if (saved) {
     try {
@@ -617,7 +621,10 @@ function quickSet(type) {
 
 function switchTab(tab) {
   activeTab = tab;
-  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['input','results','admin'][i] === tab));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const btnMap = { input: 0, results: 1, admin: 2 };
+  const btns = document.querySelectorAll('.tab-btn');
+  if (btns[btnMap[tab]]) btns[btnMap[tab]].classList.add('active');
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if (tab === 'results') renderResults();
