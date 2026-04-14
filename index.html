@@ -542,6 +542,10 @@ const GIST_FILE = 'kokook-data.json';
     document.getElementById('firebase-setup-card').style.display = 'none';
   }
 
+  // URLのwtパラメータからメンバー書き込みトークンを取得（Gistに保存しない方式）
+  const wtParam = params.get('wt');
+  if (wtParam) memberWriteToken = wtParam;
+
   // localStorageから管理者トークンを復元
   const saved = localStorage.getItem('kokook_gist_config');
   if (saved) {
@@ -591,20 +595,25 @@ async function gistWrite(data) {
   if (!res.ok) throw new Error(`保存エラー (${res.status})`);
 }
 
-// メンバー回答保存専用（memberWriteToken優先 → githubTokenにフォールバック）
+// メンバー回答保存専用（両方のトークンを順番に試す）
 async function gistWriteMember(data) {
-  const token = memberWriteToken || githubToken;
-  if (!token) throw new Error('トークン未設定です。管理者にお問い合わせください。');
-  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': `token ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/vnd.github.v3+json'
-    },
-    body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(data, null, 2) } } })
-  });
-  if (!res.ok) throw new Error(`保存エラー (${res.status})`);
+  const tokens = [...new Set([memberWriteToken, githubToken])].filter(Boolean);
+  if (!tokens.length) throw new Error('トークン未設定です。管理者にお問い合わせください。');
+  for (const token of tokens) {
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github.v3+json'
+      },
+      body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(data, null, 2) } } })
+    });
+    if (res.ok) return;
+    if (res.status !== 401) throw new Error(`保存エラー (${res.status})`);
+    // 401の場合は次のトークンを試す
+  }
+  throw new Error('トークンが無効です。管理者パネルで再設定してください。');
 }
 
 async function saveGistConfig() {
@@ -622,13 +631,7 @@ async function saveGistConfig() {
     rawBase = `https://gist.githubusercontent.com/${gistOwner}/${gistId}/raw`;
 
     if (!gist.files[GIST_FILE]) {
-      await gistWrite({ members: [], slots: [], responses: {}, _wt: githubToken });
-    } else {
-      // 既存Gistにもトークンを書き込む（メンバーが送信できるように）
-      const existing = await gistRead();
-      if (!existing._wt) {
-        await gistWrite({ ...existing, _wt: githubToken });
-      }
+      await gistWrite({ members: [], slots: [], responses: {} });
     }
     localStorage.setItem('kokook_gist_config', JSON.stringify({ gistId, gistOwner, githubToken }));
 
@@ -663,10 +666,7 @@ async function refreshData() {
       members: Array.isArray(d.members) ? d.members : [],
       responses: d.responses || {},
       slots: Array.isArray(d.slots) ? d.slots : [],
-      _wt: d._wt || '',
     };
-    // Gistデータ内のトークンをメンバー書き込み用として取得
-    if (d._wt) memberWriteToken = d._wt;
     updateHeaderSub();
     renderInputTab();
     if (activeTab === 'results') renderResults();
@@ -841,8 +841,12 @@ function showShareUrls() {
   if (!gistOwner || !gistId) return;
   const base = location.origin + location.pathname;
   const gp = `${gistOwner}/${gistId}`;
+  const wt = githubToken || memberWriteToken;
   document.getElementById('share-urls-card').style.display = '';
-  document.getElementById('member-url-text').value = `${base}?gist=${gp}`;
+  // メンバーURLにwtを含める（Gistに保存せず、URLでトークンを渡す）
+  document.getElementById('member-url-text').value = wt
+    ? `${base}?gist=${gp}&wt=${wt}`
+    : `${base}?gist=${gp}`;
   document.getElementById('admin-url-text').value  = `${base}?gist=${gp}&admin`;
 }
 
@@ -855,28 +859,19 @@ function updateTokenStatus() {
   }
 }
 
-async function applyToken() {
+function applyToken() {
   const t = document.getElementById('token-input-field').value.trim();
   if (!t) return showMsg('token-msg','トークンを入力してください','err');
   githubToken = t;
-  memberWriteToken = t; // 両方同時に更新
+  memberWriteToken = t;
   const saved = localStorage.getItem('kokook_gist_config');
   const c = saved ? JSON.parse(saved) : {};
   localStorage.setItem('kokook_gist_config', JSON.stringify({...c, githubToken: t}));
   document.getElementById('token-input-field').value = '';
   updateTokenStatus();
-  // Gistデータにもトークンを保存（メンバーが送信できるように）
-  if (gistId) {
-    try {
-      const latest = await gistRead();
-      await gistWrite({ ...latest, _wt: t });
-      showMsg('token-msg','トークンを設定しました！メンバーも送信できるようになりました。','ok');
-    } catch(e) {
-      showMsg('token-msg','トークン設定済み（Gist保存失敗: '+e.message+'）','err');
-    }
-  } else {
-    showMsg('token-msg','トークンを設定しました。','ok');
-  }
+  // メンバーURLを新しいトークンで再生成
+  showShareUrls();
+  showMsg('token-msg','トークンを設定しました！メンバーURLをコピーして共有してください。','ok');
 }
 
 function syncAdminCalendar() {
