@@ -859,6 +859,7 @@ async function applyToken() {
   const t = document.getElementById('token-input-field').value.trim();
   if (!t) return showMsg('token-msg','トークンを入力してください','err');
   githubToken = t;
+  memberWriteToken = t; // 両方同時に更新
   const saved = localStorage.getItem('kokook_gist_config');
   const c = saved ? JSON.parse(saved) : {};
   localStorage.setItem('kokook_gist_config', JSON.stringify({...c, githubToken: t}));
