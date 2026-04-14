@@ -972,9 +972,34 @@ async function saveSlots(){
   if(!dates.length||!times.length)return showMsg('slots-msg','日付と時間帯を選択してください','err');
   const slots=[];
   dates.forEach(d=>times.forEach(t=>slots.push({id:`${d}_${t}`,date:d,time:t})));
+
+  // 新しいスロットIDのセット
+  const newSlotIds = new Set(slots.map(s => s.id));
+  const oldSlotIds = new Set((appData.slots||[]).map(s => s.id));
+
   try {
-    await gistWrite({ ...appData, slots, responses:{} });
-    showMsg('slots-msg',`保存しました（${slots.length}スロット）。回答はリセットされました。`,'ok');
+    // 最新データを取得（競合防止）
+    const latest = await gistRead();
+
+    // 削除されたスロットの回答だけ消す（残ったスロットの回答は保持）
+    const updatedResponses = {};
+    for (const [member, resMap] of Object.entries(latest.responses || {})) {
+      const filtered = {};
+      for (const [slotId, val] of Object.entries(resMap || {})) {
+        if (newSlotIds.has(slotId)) filtered[slotId] = val;
+      }
+      if (Object.keys(filtered).length > 0) updatedResponses[member] = filtered;
+    }
+
+    await gistWrite({ ...latest, slots, responses: updatedResponses });
+
+    // 変更内容をメッセージで表示
+    const removedCount = [...oldSlotIds].filter(id => !newSlotIds.has(id)).length;
+    const addedCount   = [...newSlotIds].filter(id => !oldSlotIds.has(id)).length;
+    let msg = `保存しました（${slots.length}スロット）`;
+    if (removedCount > 0) msg += `　削除スロット:${removedCount}件の回答をリセット`;
+    if (addedCount   > 0) msg += `　追加スロット:${addedCount}件`;
+    showMsg('slots-msg', msg, 'ok');
     await refreshData();
   } catch(e) { showMsg('slots-msg','エラー: '+e.message,'err'); }
 }
