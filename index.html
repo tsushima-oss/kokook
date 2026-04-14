@@ -521,6 +521,8 @@ let selectedTimes = new Set();
 const PRESET_TIMES = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'];
 const DOW = ['日','月','火','水','木','金','土'];
 const GIST_FILE = 'kokook-data.json';
+// ↓ Cloudflare WorkerのURL
+const WORKER_URL = 'https://kokook-api.tsushima-84e.workers.dev';
 
 // ── Init ─────────────────────────────────────────────────────────────
 (function init() {
@@ -571,16 +573,28 @@ const GIST_FILE = 'kokook-data.json';
   if (rawBase) startPolling();
 })();
 
-// ── GitHub Gist API ───────────────────────────────────────────────────
-// 読み込み：Raw URL使用（トークン不要・レート制限なし）
+// ── データ読み書き（Worker優先、なければ直接Gist API）────────────────
 async function gistRead() {
+  if (WORKER_URL) {
+    const res = await fetch(`${WORKER_URL}?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`読み込みエラー (${res.status})`);
+    return await res.json();
+  }
   const res = await fetch(`${rawBase}/${GIST_FILE}?t=${Date.now()}`);
   if (!res.ok) throw new Error(`読み込みエラー (${res.status})`);
   return await res.json();
 }
 
-// 書き込み：管理者専用（githubToken優先）
 async function gistWrite(data) {
+  if (WORKER_URL) {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data, null, 2)
+    });
+    if (!res.ok) throw new Error(`保存エラー (${res.status})`);
+    return;
+  }
   const token = githubToken || memberWriteToken;
   if (!token) throw new Error('トークン未設定です。管理者にお問い合わせください。');
   const res = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -595,25 +609,9 @@ async function gistWrite(data) {
   if (!res.ok) throw new Error(`保存エラー (${res.status})`);
 }
 
-// メンバー回答保存専用（両方のトークンを順番に試す）
+// メンバー保存もWorkerが設定済みなら同じ関数を使う
 async function gistWriteMember(data) {
-  const tokens = [...new Set([memberWriteToken, githubToken])].filter(Boolean);
-  if (!tokens.length) throw new Error('トークン未設定です。管理者にお問い合わせください。');
-  for (const token of tokens) {
-    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github.v3+json'
-      },
-      body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(data, null, 2) } } })
-    });
-    if (res.ok) return;
-    if (res.status !== 401) throw new Error(`保存エラー (${res.status})`);
-    // 401の場合は次のトークンを試す
-  }
-  throw new Error('トークンが無効です。管理者パネルで再設定してください。');
+  return gistWrite(data);
 }
 
 async function saveGistConfig() {
@@ -841,12 +839,8 @@ function showShareUrls() {
   if (!gistOwner || !gistId) return;
   const base = location.origin + location.pathname;
   const gp = `${gistOwner}/${gistId}`;
-  const wt = githubToken || memberWriteToken;
   document.getElementById('share-urls-card').style.display = '';
-  // メンバーURLにwtを含める（Gistに保存せず、URLでトークンを渡す）
-  document.getElementById('member-url-text').value = wt
-    ? `${base}?gist=${gp}&wt=${wt}`
-    : `${base}?gist=${gp}`;
+  document.getElementById('member-url-text').value = `${base}?gist=${gp}`;
   document.getElementById('admin-url-text').value  = `${base}?gist=${gp}&admin`;
 }
 
