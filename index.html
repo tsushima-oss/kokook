@@ -305,6 +305,8 @@ input:focus,select:focus{border-color:#ff6ec7;background:#fff}
     </div>
   </div>
   <div class="header-date" id="header-sub"></div>
+  <img src="Gemini_Generated_Image_kap8jzkap8jzkap8.png" alt="キャラクター"
+    style="position:absolute;right:0;bottom:0;height:110px;width:auto;pointer-events:none;filter:drop-shadow(2px 4px 6px rgba(0,0,0,0.15))">
 </header>
 
 <div class="container">
@@ -778,14 +780,22 @@ function clearInput() { currentResponses={}; buildInputTable(); }
 async function submitResponse() {
   if (!currentUser) return;
   if (!gistId) return showMsg('submit-msg','クラウド未接続です','err');
-  for (const s of appData.slots) { if (!currentResponses[s.id]) currentResponses[s.id]='✖'; }
+  // 何も選択されていない場合（クリア後の保存）→ 未回答に戻す
+  const hasAnySelection = Object.keys(currentResponses).length > 0;
   try {
     const latest = await gistRead();
     latest.responses = latest.responses || {};
-    latest.responses[currentUser] = currentResponses;
+    if (!hasAnySelection) {
+      delete latest.responses[currentUser];
+      delete appData.responses[currentUser];
+      showMsg('submit-msg','未回答に戻しました','ok');
+    } else {
+      for (const s of appData.slots) { if (!currentResponses[s.id]) currentResponses[s.id]='✖'; }
+      latest.responses[currentUser] = currentResponses;
+      appData.responses[currentUser] = currentResponses;
+      showMsg('submit-msg','保存しました！','ok');
+    }
     await gistWriteMember(latest);
-    appData.responses[currentUser] = currentResponses;
-    showMsg('submit-msg','送信しました！','ok');
     renderInputTab();
   } catch(e) { showMsg('submit-msg','エラー: '+e.message,'err'); }
 }
